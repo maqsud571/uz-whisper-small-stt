@@ -1,0 +1,5 @@
+transformers>=4.45.2
+torch
+torchaudio
+huggingface_hub[cli]
+safetensors
