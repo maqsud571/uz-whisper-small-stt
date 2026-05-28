@@ -1,32 +1,30 @@
-
 # Uzbek Whisper Small STT
 
-`maqsudxo1ja/uz-whisper-small-stt` - o'zbek tilidagi nutqni matnga aylantirish
-uchun tayyorlangan Whisper Small asosidagi Speech-to-Text modeli.
+`maqsudxo1ja/uz-whisper-small-stt` is a Whisper Small based Speech-to-Text model
+prepared for converting Uzbek speech into text.
 
-Model Hugging Face `transformers` kutubxonasi bilan ishlaydi va Uzbek (`uz`)
-transkripsiyasi uchun default sozlangan. Asosiy model:
+The model works with the Hugging Face `transformers` library and is configured
+for Uzbek (`uz`) transcription by default. Base model:
 [`openai/whisper-small`](https://huggingface.co/openai/whisper-small).
 
-## Artefaktlar
+## Artifacts
 
 - **Model:** https://huggingface.co/maqsudxo1ja/uz-whisper-small-stt
-- **Vazifa:** Automatic Speech Recognition (ASR), ya'ni nutqdan matnga o'tkazish
-- **Default til:** Uzbek (`uz`)
+- **Task:** Automatic Speech Recognition (ASR), converting speech to text
+- **Default language:** Uzbek (`uz`)
 - **Default task:** `transcribe`
-- **Model formati:** `safetensors`
-- **Kutubxona:** `transformers`
-- **Litsenziya:** Apache-2.0
+- **Model format:** `safetensors`
+- **Library:** `transformers`
+- **License:** Apache-2.0
 
-## Model haqida
+## Model Overview
 
-Ushbu model Whisper arxitekturasining `small` variantiga asoslangan
-encoder-decoder modelidir. Audio kirish signali avval 16 kHz formatga
-moslanadi, keyin log-Mel spektrogramma ko'rinishiga o'tkaziladi. Encoder audio
-belgilarini kodlaydi, decoder esa ularni matn tokenlariga aylantiradi.
+This model is an encoder-decoder model based on the `small` variant of the
+Whisper architecture. The input audio signal is first converted to a 16 kHz
+format, then transformed into log-Mel spectrogram features. The encoder encodes
+the audio features, and the decoder converts them into text tokens.
 
-Model konfiguratsiyasida o'zbek tili va transkripsiya rejimi oldindan
-belgilangan:
+The model configuration sets Uzbek language and transcription mode by default:
 
 - `language`: `uz`
 - `task`: `transcribe`
@@ -35,50 +33,49 @@ belgilangan:
 - `chunk_length`: `30`
 - `n_samples`: `480000`
 
-## Sekundlar bo'yicha ishlashi
+## How It Works by Seconds
 
-Whisper modeli odatda audioni 30 soniyalik kontekst oynasida qayta ishlaydi.
-Ushbu repodagi `preprocessor_config.json` qiymatlariga ko'ra:
+Whisper models typically process audio using a 30-second context window.
+According to the `preprocessor_config.json` values in this repository:
 
-| Parametr | Qiymat | Ma'nosi |
+| Parameter | Value | Meaning |
 | --- | ---: | --- |
-| `sampling_rate` | 16000 Hz | Audio 1 soniyada 16000 sample ko'rinishida beriladi |
-| `chunk_length` | 30 soniya | Model uchun asosiy audio oynasi |
-| `n_samples` | 480000 | 30 soniya x 16000 sample |
-| `feature_size` | 80 | Log-Mel feature soni |
-| `hop_length` | 160 | Taxminan har 10 ms uchun feature qadam |
+| `sampling_rate` | 16000 Hz | Audio is represented as 16000 samples per second |
+| `chunk_length` | 30 seconds | Main audio window used by the model |
+| `n_samples` | 480000 | 30 seconds x 16000 samples |
+| `feature_size` | 80 | Number of log-Mel features |
+| `hop_length` | 160 | Feature step of approximately every 10 ms |
 
-Qisqa audioda, masalan 5-10 soniyalik faylda, model shu audio bo'lagini qayta
-ishlaydi va bitta matn natijasini qaytaradi. 30 soniyadan uzun audioda esa
-audio bo'laklarga ajratib qayta ishlanishi kerak. Amaliy ishlatishda
-`chunk_length_s=30` va chegaralardagi so'zlar yo'qolmasligi uchun
-`stride_length_s=5` ishlatish tavsiya etiladi.
+For short audio files, such as 5-10 second clips, the model processes the given
+audio segment and returns a single text result. Audio longer than 30 seconds
+should be split into chunks. In practical usage, it is recommended to use
+`chunk_length_s=30` and `stride_length_s=5` to reduce word loss around chunk
+boundaries.
 
-Inference vaqti audioning uzunligiga, CPU/GPU turiga, RAM/VRAM holatiga va
-batch sozlamalariga bog'liq. Tezlikni baholash uchun **Real-Time Factor (RTF)**
-ishlatiladi:
+Inference time depends on the audio length, CPU/GPU type, RAM/VRAM availability,
+and batch settings. **Real-Time Factor (RTF)** is used to measure speed:
 
 ```text
 RTF = inference_seconds / audio_seconds
 ```
 
-- `RTF < 1.0` - model real vaqtdan tezroq ishlayapti.
-- `RTF = 1.0` - 30 soniya audio taxminan 30 soniyada qayta ishlanadi.
-- `RTF > 1.0` - qayta ishlash audio uzunligidan sekinroq.
+- `RTF < 1.0` - the model is faster than real time.
+- `RTF = 1.0` - a 30-second audio file is processed in about 30 seconds.
+- `RTF > 1.0` - processing is slower than the audio duration.
 
-## O'rnatish
+## Installation
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Yoki alohida o'rnatish:
+Or install the dependencies separately:
 
 ```bash
 pip install "transformers>=4.45.2" torch torchaudio safetensors
 ```
 
-## Oddiy ishlatish
+## Basic Usage
 
 ```python
 from transformers import pipeline
@@ -97,7 +94,7 @@ result = asr("audio.wav")
 print(result["text"])
 ```
 
-## To'g'ridan-to'g'ri `WhisperProcessor` bilan ishlatish
+## Direct Usage with `WhisperProcessor`
 
 ```python
 import torch
@@ -136,36 +133,36 @@ text = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
 print(text.strip())
 ```
 
-## Kutiladigan audio formati
+## Expected Audio Format
 
-- Tavsiya etilgan sample rate: 16 kHz
-- Kanal: mono afzal
-- Formatlar: `wav`, `mp3`, `flac` va `torchaudio`/backend qo'llaydigan boshqa
-  audio formatlar
-- Shovqinsiz, yaqin mikrofon orqali yozilgan audio odatda yaxshiroq natija
-  beradi
+- Recommended sample rate: 16 kHz
+- Channel: mono is preferred
+- Formats: `wav`, `mp3`, `flac`, and other audio formats supported by
+  `torchaudio` or the selected backend
+- Clean audio recorded close to the microphone usually produces better results
 
-## Baholash
+## Evaluation
 
-Bu model kartasida hali tasdiqlangan WER/CER natijalari keltirilmagan.
-Professional benchmark uchun modelni alohida test to'plamida baholang.
+This model card does not include verified WER/CER results yet. For a professional
+benchmark, evaluate the model on a separate test set.
 
-Tavsiya etiladigan metrikalar:
+Recommended metrics:
 
 - **WER** - Word Error Rate
 - **CER** - Character Error Rate
 - **RTF** - Real-Time Factor
 
-Baholashda test dataset nomi, audio soni, umumiy audio davomiyligi, qurilma
-nomi va `transformers` versiyasini ko'rsatish tavsiya etiladi.
+When reporting evaluation results, it is recommended to include the test dataset
+name, number of audio files, total audio duration, device name, and
+`transformers` version.
 
-## Fayllar
+## Files
 
-| Fayl | Tavsif |
+| File | Description |
 | --- | --- |
-| `config.json` | Whisper model konfiguratsiyasi |
-| `generation_config.json` | Generatsiya va decoder sozlamalari |
-| `preprocessor_config.json` | Audio preprocessing sozlamalari |
-| `tokenizer_config.json` | Tokenizer konfiguratsiyasi |
-| `vocab.json`, `merges.txt` | Tokenizer lug'ati |
-| `requirements.txt` | Minimal Python kutubxonalar |
+| `config.json` | Whisper model configuration |
+| `generation_config.json` | Generation and decoder settings |
+| `preprocessor_config.json` | Audio preprocessing settings |
+| `tokenizer_config.json` | Tokenizer configuration |
+| `vocab.json`, `merges.txt` | Tokenizer vocabulary |
+| `requirements.txt` | Minimal Python dependencies |
