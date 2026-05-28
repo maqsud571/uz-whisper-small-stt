@@ -1,22 +1,3 @@
----
-license: apache-2.0
-language:
-- uz
-- en
-- ru
-base_model:
-- openai/whisper-small
-pipeline_tag: automatic-speech-recognition
-library_name: transformers
-tags:
-- automatic-speech-recognition
-- whisper
-- speech-to-text
-- uzbek
-- multilingual
-- transformers
-- safetensors
----
 
 # Uzbek Whisper Small STT
 
@@ -30,7 +11,6 @@ transkripsiyasi uchun default sozlangan. Asosiy model:
 ## Artefaktlar
 
 - **Model:** https://huggingface.co/maqsudxo1ja/uz-whisper-small-stt
-- **Asosiy model:** https://huggingface.co/openai/whisper-small
 - **Vazifa:** Automatic Speech Recognition (ASR), ya'ni nutqdan matnga o'tkazish
 - **Default til:** Uzbek (`uz`)
 - **Default task:** `transcribe`
@@ -117,32 +97,6 @@ result = asr("audio.wav")
 print(result["text"])
 ```
 
-## Uzun audio bilan ishlatish
-
-30 soniyadan uzun audio fayllar uchun chunking ishlating:
-
-```python
-from transformers import pipeline
-import torch
-
-model_id = "maqsudxo1ja/uz-whisper-small-stt"
-device = 0 if torch.cuda.is_available() else -1
-
-asr = pipeline(
-    task="automatic-speech-recognition",
-    model=model_id,
-    device=device,
-    chunk_length_s=30,
-    stride_length_s=5,
-)
-
-result = asr("long_audio.wav", return_timestamps=True)
-print(result["text"])
-
-for chunk in result.get("chunks", []):
-    print(chunk["timestamp"], chunk["text"])
-```
-
 ## To'g'ridan-to'g'ri `WhisperProcessor` bilan ishlatish
 
 ```python
@@ -182,54 +136,6 @@ text = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
 print(text.strip())
 ```
 
-## Inference vaqtini o'lchash
-
-Quyidagi kod audio fayl necha soniyada transkripsiya bo'lganini va RTF qiymatini
-chiqaradi:
-
-```python
-import time
-import torchaudio
-import torch
-from transformers import pipeline
-
-model_id = "maqsudxo1ja/uz-whisper-small-stt"
-audio_path = "audio.wav"
-device = 0 if torch.cuda.is_available() else -1
-
-metadata = torchaudio.info(audio_path)
-audio_seconds = metadata.num_frames / metadata.sample_rate
-
-asr = pipeline(
-    task="automatic-speech-recognition",
-    model=model_id,
-    device=device,
-    chunk_length_s=30,
-    stride_length_s=5,
-)
-
-start = time.perf_counter()
-result = asr(audio_path)
-elapsed = time.perf_counter() - start
-rtf = elapsed / audio_seconds
-
-print("Text:", result["text"])
-print(f"Audio uzunligi: {audio_seconds:.2f} s")
-print(f"Inference vaqti: {elapsed:.2f} s")
-print(f"RTF: {rtf:.3f}")
-```
-
-Namuna talqin:
-
-| Audio uzunligi | Inference vaqti | RTF | Talqin |
-| ---: | ---: | ---: | --- |
-| 10 s | 4 s | 0.40 | Real vaqtdan tez |
-| 30 s | 30 s | 1.00 | Real vaqtga teng |
-| 60 s | 90 s | 1.50 | Real vaqtdan sekin |
-
-Bu jadval faqat RTF qanday o'qilishini ko'rsatadi. Yakuniy natijani o'zingizning
-CPU/GPU muhitingizda yuqoridagi kod orqali o'lchang.
-
 ## Kutiladigan audio formati
 
 - Tavsiya etilgan sample rate: 16 kHz
@@ -253,39 +159,13 @@ Tavsiya etiladigan metrikalar:
 Baholashda test dataset nomi, audio soni, umumiy audio davomiyligi, qurilma
 nomi va `transformers` versiyasini ko'rsatish tavsiya etiladi.
 
-## Cheklovlar
-
-- Juda shovqinli, uzoqdan yozilgan yoki bir nechta odam bir vaqtda gapirgan
-  audiolarda aniqlik pasayishi mumkin.
-- Dialekt, talaffuz, kod-switching va fon shovqini natijaga ta'sir qiladi.
-- Model speaker diarization, ya'ni "kim gapirdi" ajratish vazifasini bajarmaydi.
-- Muhim yuridik, tibbiy yoki moliyaviy matnlarda natijani inson tekshiruvidan
-  o'tkazish zarur.
-
 ## Fayllar
 
 | Fayl | Tavsif |
 | --- | --- |
-| `model.safetensors` | Model og'irliklari |
 | `config.json` | Whisper model konfiguratsiyasi |
 | `generation_config.json` | Generatsiya va decoder sozlamalari |
 | `preprocessor_config.json` | Audio preprocessing sozlamalari |
 | `tokenizer_config.json` | Tokenizer konfiguratsiyasi |
 | `vocab.json`, `merges.txt` | Tokenizer lug'ati |
 | `requirements.txt` | Minimal Python kutubxonalar |
-
-## Iqtibos
-
-Agar ushbu modeldan ilmiy yoki mahsulot ishlarida foydalansangiz, asosiy
-Whisper ishiga havola berish tavsiya etiladi:
-
-```bibtex
-@misc{radford2022robust,
-  title={Robust Speech Recognition via Large-Scale Weak Supervision},
-  author={Alec Radford and Jong Wook Kim and Tao Xu and Greg Brockman and Christine McLeavey and Ilya Sutskever},
-  year={2022},
-  eprint={2212.04356},
-  archivePrefix={arXiv},
-  primaryClass={eess.AS}
-}
-```
